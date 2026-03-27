@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VIS-Recruit OS</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem; max-width: 900px; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+    input, select, textarea { width: 100%; margin-top: .35rem; margin-bottom: .7rem; padding: .45rem; }
+    button { background: #2b6cb0; color: #fff; border: none; border-radius: 6px; padding: .55rem .9rem; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    pre { background: #f8f9fb; padding: 1rem; border-radius: 8px; overflow: auto; }
+  </style>
+</head>
+<body>
+  <h1>VIS-Recruit Operating System (MVP)</h1>
+  <div class="row">
+    <section class="card">
+      <h3>Create Contact</h3>
+      <input id="contact_name" placeholder="Full name" />
+      <input id="contact_email" placeholder="Email" />
+      <button onclick="createContact()">Save Contact</button>
+    </section>
+
+    <section class="card">
+      <h3>Create Knowledge Doc</h3>
+      <input id="doc_title" placeholder="Document title" />
+      <input id="doc_category" placeholder="Category" />
+      <textarea id="doc_content" placeholder="Document content"></textarea>
+      <button onclick="createDoc()">Save Document</button>
+    </section>
+  </div>
+
+  <section class="card">
+    <h3>Snapshot</h3>
+    <button onclick="refreshData()">Refresh</button>
+    <pre id="output">Loading...</pre>
+  </section>
+
+  <script>
+    const api = {
+      contacts: '/crm/contacts',
+      docs: '/knowledge/documents',
+      tasks: '/crm/tasks',
+      timeline: '/communications/timeline',
+      logs: '/audit/logs'
+    };
+
+    async function createContact() {
+      await fetch(api.contacts, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          full_name: document.getElementById('contact_name').value,
+          email: document.getElementById('contact_email').value
+        })
+      });
+      refreshData();
+    }
+
+    async function createDoc() {
+      await fetch(api.docs, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          title: document.getElementById('doc_title').value,
+          category: document.getElementById('doc_category').value,
+          content: document.getElementById('doc_content').value
+        })
+      });
+      refreshData();
+    }
+
+    async function refreshData() {
+      const [contacts, docs, tasks, timeline, logs] = await Promise.all([
+        fetch(api.contacts).then(r => r.json()),
+        fetch(api.docs).then(r => r.json()),
+        fetch(api.tasks).then(r => r.json()),
+        fetch(api.timeline).then(r => r.json()),
+        fetch(api.logs).then(r => r.json())
+      ]);
+
+      document.getElementById('output').textContent = JSON.stringify({
+        contacts_count: contacts.length,
+        docs_count: docs.length,
+        tasks_count: tasks.length,
+        timeline_count: timeline.length,
+        audit_log_count: logs.length,
+        adapters: ["email", "whatsapp", "telegram", "viber", "messenger", "instagram"],
+        semantic_search_ready: {
+          strategy: "document_versions + metadata + adapter layer for embeddings",
+          status: "prepared"
+        }
+      }, null, 2);
+    }
+
+    refreshData();
+  </script>
+</body>
+</html>
